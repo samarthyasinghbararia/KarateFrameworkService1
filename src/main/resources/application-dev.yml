@@ -1,0 +1,26 @@
+server:
+    port: 5000
+    servlet:
+        context-path: /template
+
+spring:
+    application:
+        name: template
+    datasource:
+        url: jdbc:mysql://localhost:3306/newtemplatedb?createDatabaseIfNotExist=true
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        username: root
+        password: root
+    jpa:
+        show-sql: true
+        hibernate:
+            ddl-auto: update
+        properties:
+            hibernate:
+                dialect: org.hibernate.dialect.MySQLDialect
+
+management:
+    endpoints:
+        web:
+            exposure:
+                include: '*'

@@ -1,0 +1,284 @@
+rename project
+rename package
+
+application-dev.yml
+- line 6
+- line 8
+- line 32
+
+Application.java
+entities
+repositories
+services
+controllers
+logging
+
+pom.xml
+- line 11-15
+
+Dockerfile
+
+------------------
+
+steps:-
+1. create root certificate authority's private key
+2. generate self-signed certificate authority certificate with the help of 1
+3. add 2 into the browser telling the browser that certificate in 2 is valid
+4. generate server's private key
+5. create a csr(certificate signing request) config file for server
+6. create the csr by using the config from 5
+7. create openssl request signing file v3
+8. create the server's signed certificate using 6, 2, 1, 7
+9. convert server certificate to pkcs or jks
+10. use 10 as a keystore for your server
+
+TLS:-
+
+1. Create a root (CA) private key
+command - openssl genrsa -out rootCAKey.pem 4096
+
+2. Generate the self-signed root CA certificate
+command - openssl req -x509 -sha256 -new -nodes -key rootCAKey.pem -days 3650 -out rootCACert.pem
+
+3. Review the certificate (Optional)
+command - openssl x509 -in rootCACert.pem -text > rootCert.txt
+
+4. Adding the root certificate in trusted root:
+Browser -> settings -> security -> Manage device certificates -> Trusted Root -> Import - Add the generated file (rootCACert.pem) -> Next
+
+5. Generate server private key
+command - openssl genrsa -out serverKey.pem 4096
+
+6. Create server csr config file (serverCertReq.config) with following contents
+[req]
+req_extensions = v3_req
+distinguished_name = dn
+prompt = no
+
+[dn]
+CN = localhost
+C = IN
+L = Pune
+O = CG
+OU = BDF
+
+[v3_req]
+subjectAltName = DNS:localhost
+
+7. Create csr file
+command - openssl req -new -key serverKey.pem -sha256 -out serverCert.csr -config serverCertReq.config
+
+8. Review CSR file:
+command - openssl req -in serverCert.csr -noout -text > serverCertCSR.txt
+verify that it contains
+ Requested Extensions:
+             X509v3 Subject Alternative Name:
+                DNS:localhost
+
+9. Create OpenSSL request signing configuration file v3.ext with following content
+subjectAltName = DNS:localhost
+
+10. Create the signed certificate:
+command - openssl x509 -req -sha256 -in serverCert.csr -CA ../rootCACert.pem -CAkey ../rootCAKey.pem -CAcreateserial -out serverCert.pem -days 365 -extfile v3.ext
+
+11. Review the certificate
+command - openssl x509 -in serverCert.pem -text > serverCert.txt
+
+It must contain:
+X509v3 extensions:
+            X509v3 Subject Alternative Name:
+                DNS:localhost
+
+12. Convert server certificate file (serverCert.pem) to PKCS (keystore) file:
+command - openssl pkcs12 -export -in serverCert.pem -inkey serverKey.pem -name <any name> -out serverKeystore.p12 -passout pass:<any pass>
+
+(DO THIS COMMAND FOR mTLS CREATION)
+keytool -import -file C:\cascerts\firstCA.cert -alias firstCA -keystore myTrustStore
+
+13. Copy the generated p12 file to resourse folder of project under keystore directory (create the dir if it does not exists)
+
+14. Add following configurations to properties file
+server.ssl.enabled=true
+server.ssl.key-store-type=PKCS12
+server.ssl.key-store=classpath:keystore/serverKeystore.p12
+server.ssl.key-store-password=<your password> (generated during PKCS file creation)
+server.ssl.protocol=TLS
+server.ssl.enabled-protocols=TLSv1.2
+
+steps:
+1. create root certificate authority's private key
+2. genereate self signed certificate authority certificate with the help of 1
+3. add 2 into the browser telling the browser that certificate in 2 is valid
+4. generate server's private key
+5. create a csr(certificate signing request) config file for server
+6. create the csr by using the config from 5
+7. create openssl request signing file v3
+8. create the server's signed certificate using 6, 2, 1, 7
+9. convert server certificate to pkcs or jks
+10. use 10 as a keystore for your server
+
+
+
+
+Requirements OpenSSL
+
+1. Create a root (CA) private key
+command - openssl genrsa -out rootCAKey.pem 4096
+
+2. Generate the self-signed root CA certificate
+command - openssl req -x509 -sha256 -new -nodes -key rootCAKey.pem -days 3650 -out rootCACert.pem
+
+3. Review the certificate (Optional)
+command - openssl x509 -in rootCACert.pem -text > rootCert.txt
+
+4. Adding the root certificate in trusted root:
+Browser -> settings -> security -> Manage device certificates -> Trusted Root -> Import - Add the generated file (rootCACert.pem) -> Next
+
+5. Generate server private key
+command - openssl genrsa -out serverKey.pem 4096
+
+6. Create server csr config file (serverCertReq.config) with following contents
+[req]
+req_extensions = v3_req
+distinguished_name = dn
+prompt = no
+
+[dn]
+CN = localhost
+C = IN
+L = Pune
+O = <Your own company name>
+OU = <Organizational Unit Name (eg, section)>
+
+[v3_req]
+subjectAltName = DNS:localhost
+
+7. Create csr file
+command - openssl req -new -key serverKey.pem -sha256 -out serverCert.csr -config serverCertReq.config
+
+8. Review CSR file:
+command - openssl req -in serverCert.csr -noout -text > serverCertCSR.txt
+verify that it contains
+ Requested Extensions:
+             X509v3 Subject Alternative Name:
+                DNS:localhost
+
+9. Create OpenSSL request signing configuration file v3.ext with following content
+subjectAltName = DNS:localhost
+
+10. Create the signed certificate:
+command - openssl x509 -req -sha256 -in serverCert.csr -CA ../rootCACert.pem -CAkey ../rootCAKey.pem -CAcreateserial -out serverCert.pem -days 365 -extfile v3.ext
+
+11. Review the certificate
+command - openssl x509 -in serverCert.pem -text > serverCert.txt
+
+It must contain:
+X509v3 extensions:
+            X509v3 Subject Alternative Name:
+                DNS:localhost
+
+12. Convert server certificate file (serverCert.pem) to PKCS (keystore) file:
+command - openssl pkcs12 -export -in serverCert.pem -inkey serverKey.pem -name <any name> -out serverKeystore.p12 -passout pass:<any pass>
+keytool -import -file C:\cascerts\firstCA.cert -alias firstCA -keystore myTrustStore
+
+13. Copy the generated p12 file to resourse folder of project under keystore directory (create the dir if it does not exists)
+
+14. Add following configurations to properties file
+server.ssl.enabled=true
+server.ssl.key-store-type=PKCS12
+server.ssl.key-store=classpath:keystore/serverKeystore.p12
+server.ssl.key-store-password=<your password> (generated during PKCS file creation)
+server.ssl.protocol=TLS
+server.ssl.enabled-protocols=TLSv1.2
+
+steps:
+1. create root certificate authority's private key
+2. genereate self signed certificate authority certificate with the help of 1
+3. add 2 into the browser telling the browser that certificate in 2 is valid
+4. generate server's private key
+5. create a csr(certificate signing request) config file for server
+6. create the csr by using the config from 5
+7. create openssl request signing file v3
+8. create the server's signed certificate using 6, 2, 1, 7
+9. convert server certificate to pkcs or jks
+10. use 10 as a keystore for your server
+
+
+
+
+Requirements OpenSSL
+
+1. Create a root (CA) private key
+command - openssl genrsa -out rootCAKey.pem 4096
+
+2. Generate the self-signed root CA certificate
+command - openssl req -x509 -sha256 -new -nodes -key rootCAKey.pem -days 3650 -out rootCACert.pem
+
+3. Review the certificate (Optional)
+command - openssl x509 -in rootCACert.pem -text > rootCert.txt
+
+4. Adding the root certificate in trusted root:
+Browser -> settings -> security -> Manage device certificates -> Trusted Root -> Import - Add the generated file (rootCACert.pem) -> Next
+
+5. Generate server private key
+command - openssl genrsa -out serverKey.pem 4096
+
+6. Create server csr config file (serverCertReq.config) with following contents
+[req]
+req_extensions = v3_req
+distinguished_name = dn
+prompt = no
+
+[dn]
+CN = localhost
+C = IN
+L = Pune
+O = <Your own company name>
+OU = <Organizational Unit Name (eg, section)>
+
+[v3_req]
+subjectAltName = DNS:localhost
+
+7. Create csr file
+command - openssl req -new -key serverKey.pem -sha256 -out serverCert.csr -config serverCertReq.config
+
+8. Review CSR file:
+command - openssl req -in serverCert.csr -noout -text > serverCertCSR.txt
+verify that it contains
+ Requested Extensions:
+             X509v3 Subject Alternative Name:
+                DNS:localhost
+
+9. Create OpenSSL request signing configuration file v3.ext with following content
+subjectAltName = DNS:localhost
+
+10. Create the signed certificate:
+command - openssl x509 -req -sha256 -in serverCert.csr -CA ../rootCACert.pem -CAkey ../rootCAKey.pem -CAcreateserial -out serverCert.pem -days 365 -extfile v3.ext
+
+11. Review the certificate
+command - openssl x509 -in serverCert.pem -text > serverCert.txt
+
+It must contain:
+X509v3 extensions:
+            X509v3 Subject Alternative Name:
+                DNS:localhost
+
+12. Convert server certificate file (serverCert.pem) to PKCS (keystore) file:
+command - openssl pkcs12 -export -in serverCert.pem -inkey serverKey.pem -name <any name> -out serverKeystore.p12 -passout pass:<any pass>
+keytool -import -file C:\cascerts\firstCA.cert -alias firstCA -keystore myTrustStore
+
+13. Copy the generated p12 file to resourse folder of project under keystore directory (create the dir if it does not exists)
+
+14. Add following configurations to yaml file
+
+server:
+    ssl:
+        enabled: true  # TLS
+        key-store-type: PKCS12
+        key-store: classpath:keystore/serverKeystore.p12
+        key-store-password: password
+        protocol: TLS
+        enabled-protocols: TLSv1.2
+#        client-auth: need  # mTLS
+#        trust-store: classpath:truststore/clientTruststore.p12
+#        trust-store-password: password
