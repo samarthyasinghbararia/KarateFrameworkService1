@@ -77,6 +77,16 @@
 
 	<build>
 		<finalName>${project.name}</finalName>
+
+		<!-- required so that non .java files can be configured and run from /src/test/java-->
+		<testResources>
+			<testResource>
+				<directory>src/test/java</directory>
+				<excludes>
+					<exclude>**/*.java</exclude>
+				</excludes>
+			</testResource>
+		</testResources>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
